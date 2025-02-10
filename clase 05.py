@@ -140,19 +140,33 @@ dataframeResultado = dd.sql(consultaSQL).df()
 # EJERCICIO 3
 #=============================================================================
 #%%Ejercicio 3.a
+deptos1 = dd.sql("""SELECT DISTINCT cd.id_depto, cd.descripcion
+FROM casos_con_departamentos AS cd""").df()
 consultaSQL = """
-                        SELECT DISTINCT descripcion
+                        SELECT DISTINCT d.descripcion, c.id_depto
                         FROM departamento AS d
-                    LEFT OUTER JOIN casos AS c
-                    ON d.id != c.id_depto
-            
+                        LEFT OUTER JOIN casos AS c
+                        ON d.id = c.id_depto
+                        WHERE c.id_depto IS NULL
                     
+ 
               """
 
 dataframeResultado = dd.sql(consultaSQL).df()
 
 #%%Ejercicio 3.b
 
+consultaSQL = """
+                        SELECT DISTINCT e.descripcion
+                        FROM tipoevento AS e
+                        LEFT OUTER JOIN casos AS c
+                        ON e.id = c.id_tipoevento
+                        WHERE c.id_tipoevento IS NULL
+                    
+ 
+              """
+
+dataframeResultado = dd.sql(consultaSQL).df()
 #%%===========================================================================
 # EJERCICIO 4
 #=============================================================================
@@ -211,7 +225,7 @@ dataframeResultado = dd.sql(consultaSQL).df()
 #%%Ejercicio 4.e
 
 casos_con_departamentos = """
-                    SELECT DISTINCT casos.id, casos.id_tipoevento , casos.anio, casos.semana_epidemiologica, casos.id_grupoetario, casos.cantidad, d.descripcion
+                    SELECT DISTINCT casos.id, casos.id_tipoevento , casos.anio, casos.semana_epidemiologica, casos.id_grupoetario, casos.cantidad, d.descripcion, casos.id_depto
                     FROM casos
                 INNER JOIN departamento AS d
                     ON casos.id_depto= d.id
@@ -225,6 +239,7 @@ total_casos_2019 = """
                     FROM casos AS c
                 INNER JOIN departamento AS d
                     ON c.id_depto= d.id
+                    WHERE anio = 2019
                     GROUP BY d.descripcion
                     """
 total_casos_2019 = dd.sql(total_casos_2019).df()
@@ -233,26 +248,41 @@ total_casos_2019 = dd.sql(total_casos_2019).df()
 consultaSQL = """
                 SELECT descripcion, cantidad_casos
                 FROM total_casos_2019 AS tc
-                WHERE cantidad_casos =  (MAX(cantidad_casos))
+                WHERE cantidad_casos =  (
+                    SELECT MIN(tc1.cantidad_casos)
+                    FROM total_casos_2019 AS tc1)
               """
 
 dataframeResultado = dd.sql(consultaSQL).df()
 
 
 #%%Ejercicio 4.f
+total_casos_2020 = """
+                    SELECT DISTINCT d.descripcion, SUM(c.cantidad) as cantidad_casos
+                    FROM casos AS c
+                INNER JOIN departamento AS d
+                    ON c.id_depto= d.id
+                    WHERE anio = 2020
+                    GROUP BY d.descripcion
+                    """
+total_casos_2020 = dd.sql(total_casos_2020).df()
+
+
 consultaSQL = """
-                SELECT cd.descripcion AS depto_caso, MIN(cd.cantidad) AS cantidadCasos
-                FROM casos_con_departamentos AS cd
-                WHERE cd.anio = '2020'
-                GROUP BY depto_caso
+                SELECT descripcion, cantidad_casos
+                FROM total_casos_2020 AS tc
+                WHERE cantidad_casos =  (
+                    SELECT MAX(tc1.cantidad_casos)
+                    FROM total_casos_2020 AS tc1)
               """
+
 
 dataframeResultado = dd.sql(consultaSQL).df()
 #%%Ejercicio 4.g
 
 
 casos_provincia = """
-                    SELECT DISTINCT casos.id, casos.id_tipoevento , casos.anio, casos.semana_epidemiologica, casos.id_grupoetario, casos.cantidad, dp.provincia
+                    SELECT DISTINCT casos.id, casos.id_tipoevento , casos.anio, casos.semana_epidemiologica, casos.id_grupoetario, casos.cantidad, dp.provincia, casos.id_depto
                     FROM casos
                 INNER JOIN depto_por_provincia AS dp
                     ON casos.id_depto= dp.id
@@ -383,3 +413,293 @@ tabla_final = """
 total_dn = dd.sql(total_dn).df()
 total_dv = dd.sql(total_dv).df()
 tabla_final = dd.sql(tabla_final).df()
+
+#%%===========================================================================
+# EJERCICIO 5
+#=============================================================================
+#%%Ejercicio 5.a
+
+max_casos_depto = dd.sql( """
+                     SELECT cd1.descripcion
+                     FROM casos_con_departamentos AS cd1
+                     GROUP BY cd1.descripcion
+                     HAVING SUM(cd1.cantidad) >= ALL(
+                         SELECT SUM(cd2.cantidad) 
+                         FROM casos_con_departamentos AS cd2
+                         GROUP BY cd2.descripcion
+                         )
+              """).df()
+
+#%%Ejercicio 5.b
+
+tipoev_casos = dd.sql(""" 
+                      SELECT DISTINCT cdt1.descripcion
+                      FROM casos_con_tipos AS cdt1
+                      WHERE cdt1.descripcion = ANY(
+                          SELECT cdt2.descripcion
+                          FROM casos_con_tipos AS cdt2
+                          )
+                      """).df()
+                      
+#%%===========================================================================
+# EJERCICIO 6
+#=============================================================================
+#%%Ejercicio 6.a
+
+tipoev_casos = dd.sql(""" 
+                      SELECT DISTINCT cdt1.descripcion
+                      FROM casos_con_tipos AS cdt1
+                      WHERE cdt1.descripcion IN(
+                          SELECT cdt2.descripcion
+                          FROM casos_con_tipos AS cdt2
+                          )
+                      """).df()
+
+#%%Ejercicio 6.b
+tipoev_casos = dd.sql(""" 
+                      SELECT DISTINCT t.descripcion
+                      FROM tipoevento AS t
+                      WHERE t.descripcion NOT IN(
+                          SELECT cdt.descripcion
+                          FROM casos_con_tipos AS cdt
+                          )
+                      """).df()
+
+#%%===========================================================================
+# EJERCICIO 7
+#=============================================================================
+#%%Ejercicio 7.a
+
+total_pais_2019 = dd.sql( """
+                         SELECT SUM(cp2.cantidad) AS total
+                         FROM casos_provincia AS cp2
+                         WHERE cp2.anio = 2019
+                        
+              """).df()
+              
+total_pais_2020 = dd.sql( """
+                         SELECT SUM(cp2.cantidad) AS total
+                         FROM casos_provincia AS cp2
+                         WHERE cp2.anio = 2020
+                        
+              """).df()            
+              
+cant_prov = dd.sql( """
+                         SELECT COUNT(p.descripcion) AS total
+                         FROM provincia AS p
+                        
+                        
+              """).df()
+                              
+max_casos_promedio19 = dd.sql("""
+                SELECT cp1.provincia AS anio_2019, SUM(cp1.cantidad) AS total19
+                FROM casos_provincia AS cp1
+                WHERE cp1.anio = 2019
+                GROUP BY cp1.provincia
+                HAVING SUM(cp1.cantidad) >= ALL(
+                    SELECT total_pais_2019.total / cant_prov.total
+                    FROM total_pais_2019, cant_prov
+                )
+                """).df()
+max_casos_promedio20 = dd.sql("""
+                SELECT cp1.provincia AS anio_2020, SUM(cp1.cantidad) AS total20
+                FROM casos_provincia AS cp1
+                WHERE cp1.anio = 2020
+                GROUP BY cp1.provincia
+                HAVING SUM(cp1.cantidad) >= ALL(
+                    SELECT total_pais_2020.total / cant_prov.total
+                    FROM total_pais_2020, cant_prov) 
+                """).df()
+                
+max_casos_promedio = dd.sql("""
+                SELECT m1.anio_2019, m2.anio_2020
+                FROM max_casos_promedio20 AS m2
+                LEFT OUTER JOIN max_casos_promedio19 AS m1
+                ON m1.anio_2019 = m2.anio_2020
+                """).df()
+                
+#%%Ejercicio 7.b
+
+
+xx= dd.sql("""
+                                    SELECT SUM(cp2.cantidad)
+                                    FROM casos_provincia AS cp2
+                                    WHERE cp2.provincia = 'Corrientes' AND cp2.anio = 2020
+                                     
+                                
+                            """).df()
+
+max_casos_promedio19 = dd.sql("""
+                                SELECT cp1.provincia AS anio_2019, SUM(cp1.cantidad) AS total19
+                                FROM casos_provincia AS cp1
+                                WHERE cp1.anio = 2019
+                                GROUP BY cp1.provincia
+                                HAVING SUM(cp1.cantidad) >= ALL(
+                                    SELECT SUM(cp2.cantidad)
+                                    FROM casos_provincia AS cp2
+                                    WHERE cp2.provincia = 'Corrientes' 
+                                )
+                            """).df()
+
+max_casos_promedio20 = dd.sql("""
+                                SELECT cp1.provincia AS anio_2020, SUM(cp1.cantidad) AS total20
+                                FROM casos_provincia AS cp1
+                                WHERE cp1.anio = 2020
+                                GROUP BY cp1.provincia
+                                HAVING SUM(cp1.cantidad) >= ALL(
+                                    SELECT SUM(cp2.cantidad)
+                                    FROM casos_provincia AS cp2
+                                    WHERE cp2.provincia = 'Corrientes'  
+                                )
+                            """).df()
+
+max_casos_promedio = dd.sql("""
+                                SELECT m1.anio_2019, m2.anio_2020
+                                FROM max_casos_promedio20 AS m2
+                                LEFT OUTER JOIN max_casos_promedio19 AS m1
+                                ON m1.anio_2019 = m2.anio_2020
+                            """).df()
+
+
+#%%===========================================================================
+# EJERCICIO 8
+#=============================================================================
+ #%%Ejercicio 8.a
+ 
+ depto_orden = dd.sql("""
+                      SELECT id, descripcion
+                      FROM departamento
+                      ORDER BY deScripcion DESC, id ASC
+                      """).df()
+ 
+ #%%Ejercicio 8.b
+ 
+ prov_M = dd.sql("""
+                 SELECT id, descripcion
+                 FROM provincia
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE 'M%'
+                 """).df()
+
+ #%%Ejercicio 8.c
+ 
+ prov_M = dd.sql("""
+                 SELECT id, descripcion
+                 FROM provincia
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE 'S%' AND descripcion LIKE '____a%'
+                 """).df()
+                 
+ #%%Ejercicio 8.d
+ 
+ prov_M = dd.sql("""
+                 SELECT id, descripcion
+                 FROM provincia
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE '%a'
+                 """).df()
+                 
+ #%%Ejercicio 8.e
+ 
+ prov_M = dd.sql("""
+                 SELECT id, descripcion
+                 FROM provincia
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE '_____'
+                 """).df()
+
+ #%%Ejercicio 8.f
+ 
+ prov_M = dd.sql("""
+                 SELECT id, descripcion
+                 FROM provincia
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE '%do%'
+                 """).df()      
+                 
+ #%%Ejercicio 8.g
+ 
+ prov_M = dd.sql("""
+                 SELECT id, descripcion
+                 FROM provincia
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE '%do%' AND id < 30
+                 """).df()                
+ 
+ #%%Ejercicio 8.h
+ 
+ depto_M = dd.sql("""
+                 SELECT id AS codigo_depto, descripcion AS nombre_depto
+                 FROM departamento
+                 GROUP BY id, descripcion
+                 HAVING descripcion LIKE '%San%' 
+                 ORDER BY descripcion DESC
+                 """).df()                
+ 
+ #%%Ejercicio 8.i
+ 
+ casos_prov_depto = dd.sql("""
+                           SELECT cp.provincia, d.descripcion AS depto, cp.anio, cp.semana_epidemiologica, cp.id_grupoetario, cp.cantidad
+                           FROM casos_provincia AS cp, departamento AS d
+                           WHERE d.id = cp.id_depto AND cp.cantidad > 10 AND cp.provincia LIKE '%a'
+                           ORDER BY cp.cantidad DESC, cp.provincia ASC, d.descripcion ASC, cp.anio ASC, cp.id_grupoetario ASC
+                           """).df()
+                           
+ #%%Ejercicio 8.j
+ 
+
+ 
+ casos_prov_depto = dd.sql("""
+                           SELECT cp.provincia, d.descripcion AS depto, cp.anio, cp.semana_epidemiologica, cp.id_grupoetario, cp.cantidad
+                           FROM casos_provincia AS cp, departamento AS d
+                           WHERE d.id = cp.id_depto AND cp.provincia LIKE '%a'
+                           AND cp.cantidad = (
+                               SELECT MAX(cp2.cantidad)
+                               FROM casos_provincia AS cp2
+                               WHERE cp2.provincia LIKE '%a')
+                           ORDER BY cp.cantidad DESC, cp.provincia ASC, d.descripcion ASC, cp.anio ASC, cp.id_grupoetario ASC
+                           """).df()
+                           
+#%%===========================================================================
+# EJERCICIO 9
+#=============================================================================
+  #%%Ejercicio 9.a
+  
+deptos = dd.sql("""
+                SELECT id,REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(descripcion, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'),
+          'Á', 'A'), 'É', 'E'), 'Í', 'I'), 'Ó', 'O'), 'Ú', 'U') AS descripcion
+                FROM departamento
+                
+                """).df()
+
+  #%%Ejercicio 9.b
+  
+provs = dd.sql("""
+                SELECT UPPER(REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(
+          REPLACE(descripcion, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'),
+          'Á', 'A'), 'É', 'E'), 'Í', 'I'), 'Ó', 'O'), 'Ú', 'U') )AS descripcion
+                FROM provincia
+                ORDER BY descripcion
+                
+                """).df()
+                        
+#%%===========================================================================
+                                            FIN
+#=============================================================================
