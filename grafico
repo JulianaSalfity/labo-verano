@@ -13,3 +13,6 @@ filtro
 df['nombre_com'] == 'x' 
 
 df['nombre_com'].isin('list') 
+
+Medidas de Tendencia = media, mediana, moda
+Medidas de Dispersión = rango, desviación estándar, percentil
