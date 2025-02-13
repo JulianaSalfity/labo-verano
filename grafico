@@ -1,0 +1,15 @@
+VISUALIZACIÓN-GRÁFICOS
+
+patrones, anomalias y relaciones
+Variables : cuantitativas, cualitativas, categóricas
+Tipos de datos : transversales, series temporales (afecta la distribución), series espaciales
+
+matplotlib
+fig = tamaño
+ax = colores y etiquetas
+
+pandas
+filtro 
+df['nombre_com'] == 'x' 
+
+df['nombre_com'].isin('list') 
