@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 13 09:46:11 2025
+
+@author: Estudiante
+"""
+
+import pandas as pd
+import duckdb as dd
+import openpyxl
+
+# Correct usage
+carpeta = "/home/Estudiante/Descargas/"
+df = pd.read_excel(carpeta+"padron_poblacion.xlsX", skiprows=12)
+
+# Check the first few rows
+print(df.head())
+
+df = df.rename(columns={'Unnamed: 1': 'codAr_edad', 'Unnamed: 2':'depto_cant'})
+
+orden1 = dd.sql("""SELECT codAr_edad, depto_cant
+                FROM df
+                """
+                ).df()
+df.shape
+
+orden2 = dd.sql("""SELECT codAr_edad, depto_cant
+                FROM df
+                GROUP BY codAR_edad, depto_cant
+                HAVING codAr_edad LIKE 'AREA%'
+                """
+                ).df()
+
+
+
+df['codAr_edad'].astype(str)
+# Buscar las filas donde la columna contiene 'area'
+indices_area = df[df['codAr_edad'].str.contains('area', case=False, na=False)].index
+print(indices_area)
+# Dividir el DataFrame en múltiples tablas
+for i in range(len(indices_area) - 1):
+    inicio = indices_area[i]
+    fin = indices_area[i +1 ]
+    tabla = df.iloc[inicio: fin]
+    nombre_tabla = f"{df.iloc[inicio]['codAr_edad']}{df.iloc[inicio]['depto_cant']}"
+    tabla = tabla[3:-2][['codAr_edad','depto_cant']]
+    tabla.to_csv(nombre_tabla)
+
+
+# Ahora las tablas serán variables separadas en el entorno y aparecerán en el panel de variables
+print("Tablas asignadas como variables:")
+
+
