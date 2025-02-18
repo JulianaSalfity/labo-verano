@@ -75,8 +75,6 @@ for specie in species_list:
     ax.set_xlim(x_min, x_max)  # Mismo rango en X
     ax.set_ylim(0, 22)  # Mismo rango en Y
     
-x_min = data_ping['bill_length_mm'].min()
-x_max = data_ping['bill_length_mm'].max()
 
 
 
@@ -120,3 +118,33 @@ for specie in species_list:
     ax.set_ylim(0, 20)  # Mismo rango en Y
     
 #Adelie tiene todo de mayor tamaño
+
+x_min = data_ping['bill_length_mm'].min()
+x_max = data_ping['bill_length_mm'].max()
+colores = dict(zip(['Female', 'Male'],['red','blue']))
+fig, ax = plt.subplots()
+for sexo in ['Female', 'Male']:
+    data = data_ping[data_ping['sex']== sexo]
+    for specie in species_list:
+        df_especie = data[data['species'] == specie]
+        
+        # Crear figura y ejes
+        fig, ax = plt.subplots()
+        
+        # Crear histograma
+        ax.hist(df_especie['bill_length_mm'].dropna(), bins=20, color = colores[sexo], edgecolor='black')
+        
+        # Configurar título
+        ax.set_title(f'Especie: {specie} Bill length')
+        
+        # Establecer los mismos rangos de eje X e Y
+        ax.set_xlim(x_min, x_max)  # Mismo rango en X
+        ax.set_ylim(0, 20)  # Mismo rango en Y
+        
+        
+fig, ax = plt.subplots()
+ax.set_title('Pico y alas según sexo')
+for sexo in ['Female', 'Male']:
+    ax.scatter(data = data_ping[data_ping['sex']== sexo], x = 'bill_length_mm', y ='flipper_length_mm', color = colores[sexo] )
+ax.set_xlabel('pico', fontsize ='medium')
+ax.set_ylabel('alas', fontsize ='medium')
