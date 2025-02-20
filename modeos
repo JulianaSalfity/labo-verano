@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 20 14:36:23 2025
+
+@author: Estudiante
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import r2_score, mean_squared_error
+
+# %%===========================================================================
+# roundup
+# =============================================================================
+ru = pd.read_csv("datos_libreta_60224.txt", delim_whitespace=' ')
+
+X = ru['RU']
+Y =ru['ID']
+b,a= np.polyfit(ru['RU'] , ru['ID'] , 1)
+
+
+print("Ordenada y pendiente: " + str(a) + ", " + str(b))
+q
+Y_pred=a + b*X
+
+r2 = r2_score(Y, Y_pred) #Que tanto se parece a una recta
+print("R²: " + str(r2))
+
+MSE = mean_squared_error(Y,Y_pred) #Diferencia entre valor real y valor esperado
+print("MSE: " + str(MSE))
+plt.scatter(ru['RU'], ru['ID'])
+plt.plot(X, Y_pred,  'r')
+plt.show()
