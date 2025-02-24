@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 18 10:12:04 2025
+
+@author: Estudiante
+"""
+
+import pandas as pd
+import duckdb as dd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from pathlib import Path
+ 
+carpeta =Path.cwd() 
+planilla = pd.read_csv(carpeta / 'DatosTiemposDeReaccion-DerechaIzquierda - Hoja 1.csv')
+colores ={
+    "Izquierda": "blue",
+    "Derecha": "red"}
+fig, ax = plt.subplots()
+sns.histplot(data = planilla, x = 'Tiempo', hue = 'Mano', bins = 17, palette = colores)
+ax.set_title('Tiempo de reacción según mano')
+
+fig, ax = plt.subplots()
+sns.violinplot(x= 'Mano', y= 'Tiempo',data = planilla, palette = {'Izquierda': 'blue','Derecha': 'red'})
+
+planilla2 = pd.read_csv(carpeta / 'DatosTiemposDeReaccion-HabilNoHabil - Hoja 1.csv')
+colores2 ={
+    "mano_habil": "blue",
+    "mano_no_habil": "red"}
+fig, ax = plt.subplots()
+planilla2.boxplot( column=['mano_habil'], ax = ax, grid = False, showmeans = True)
+ax.set_title('Tiempo de reacción mano hábil')
+fig, ax = plt.subplots()
+planilla2.boxplot( column=['mano_no_habil'], ax = ax, grid = False, showmeans = True)
+ax.set_title('Tiempo de reacción mano no hábil')
+
+#%%
+from sklearn.datasets import load_iris
+from sklearn import tree
+
+iris = load_iris(as_frame = True)
+data = iris.frame
+atributos = iris.data
+y = iris.target
+
+data.columns
+
+atri = ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)',
+       'petal width (cm)']
+fig, s= plt.subplots(2,2)
+
+sns.histplot(data= data, x = 'sepal length (cm)', hue = 'target', bins = 35, stat= 'probability', ax=s[0,0], palette = 'viridis')
+sns.histplot(data= data, x = 'sepal width (cm)', hue = 'target', bins = 35, stat= 'probability', ax=s[0,1], palette = 'viridis')
+sns.histplot(data= data, x = 'petal length (cm)', hue = 'target', bins = 35, stat= 'probability', ax=s[1,1], palette = 'viridis')
+sns.histplot(data= data, x = 'petal width (cm)', hue = 'target', bins = 35, stat= 'probability', ax=s[1,0], palette = 'viridis')
+
+def predecir_iris(fila):
+    pet_l =fila ['petal length (cm)']
+    if pet_l < 2:
+        target = 0
+    elif pet_l < 5 and pet_l > 3:
+        target= 1
+    else:
+        target= 2
+    return target
+
+
+data['predicted target'] = data.apply(predecir_iris, axis = 1)
+clase = set(data['target'])
+
+matriz_confusion = np.zeros((3,3))
+data_clasif = data.copy()
+data_clasif['predicted target']  = data.apply(predecir_iris, axis = 1)
+for i in range(3):
+    for j in range(3):
+        filtro = ((data_clasif['target'] == i) & 
+        (data_clasif['predicted target'] == j))
+        matriz_confusion[i,j] = len(data_clasif[filtro])
+        
+     
+        
+
+   
+def predecir_iris_exactitud(fila):
+    umbrales = {4,4.5,4.8,5}
+    data = data_clasif
+    for umbral in umbrales:
+        pet_l =fila ['petal length (cm)']
+        if pet_l < 2:
+            target = 0
+        else if pet_l < umbral:
+            target= 1
+        else:
+            target= 3
+            
+#%%
+ 
+carpeta =Path.cwd() 
+titanic = pd.read_csv(carpeta / 'titanic_training.csv')
+
+titanic_sobrevivio = titanic[titanic['Survived'] == 1]
+fig, ax = plt.subplots()
+conteo_pclass = titanic_sobrevivio['Pclass'].value_counts()
+titanic_sobrevivio['Pclass'].value_counts().plot(kind = 'pie',
+                                              ax= ax,
+                                              colors = ['chocolate','salmon','yellow'],
+                                              startangle = 90,
+                                              shadow= True,
+                                              autopct='%1.1f%%',
+                                              labels=[f'Clase {i} ({count})' for i, count in enumerate(conteo_pclass.index, start=1)]
+                                              )
+                
+titanic_sobrevivio_menores = titanic_sobrevivio[titanic_sobrevivio['Age'] < 14]
+titanic_sobrevivio_menores = titanic_sobrevivio[titanic_sobrevivio['Age'] < 14]
+
+test = pd.read_csv(carpeta/'test_titanic.csv')            
+def clasificador_titanic(fila):
+    clase = fila['Pclass']
+    sexo = fila['Sex']        
+    age = fila ['Age']
+    
+    if clase == 1:
+        if age < 18 or sexo == 'female':
+            res = 1
+        elif age > 18 and age < 35:
+            res = 0
+        else:
+             res = 0
+    elif clase == 2:
+        if age < 18:
+            res = 1
+        elif age > 18 and age < 35:
+            res = 0
+        else:
+             res = 0
+    elif clase == 3:
+        if age > 20:
+            res = 0
+        else:
+            res = 1
+    return res
+            
+test['Predicción'] = test.apply(clasificador_titanic, axis= 1)
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+        
