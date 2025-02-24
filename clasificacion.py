@@ -48,6 +48,13 @@ predicciones = arbol_1.predict(X)  # Generamos las predicciones
 tree.plot_tree(arbol_1, feature_names=X.columns, class_names=['J','C','E','P'], filled=True, rounded=True, fontsize=4)
 plt.title('Árbol de Decisión 1')
 plt.show()
+# Definir las características del árbol a predecir
+nuevo_arbol_1 = pd.DataFrame([[22, 56, 8]], columns=['altura_tot', 'diametro', 'inclinacio'])
+
+# Realizar la predicción
+prediccion = arbol_1.predict(nuevo_arbol_1)
+
+print(f'La especie predicha es: {prediccion[0]}')
 
 X = arboles[['altura_tot', 'inclinacio']]  # Características
 y = arboles['nombre_com']  # Etiqueta
@@ -62,3 +69,11 @@ predicciones = arbol_2.predict(X)  # Generamos las predicciones
 tree.plot_tree(arbol_2, feature_names=X.columns, class_names=['J','C','E','P'], filled=True, rounded=True, fontsize=4)
 plt.title('Árbol de Decisión 2')
 plt.show()
+
+# Definir las características del árbol a predecir
+nuevo_arbol_2 = pd.DataFrame([[22, 8]], columns=['altura_tot', 'inclinacio'])
+
+# Realizar la predicción
+prediccion = arbol_2.predict(nuevo_arbol_2)
+
+print(f'La especie predicha es: {prediccion[0]}')
