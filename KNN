@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 25 10:13:42 2025
+
+@author: Estudiante
+"""
+
+
+from sklearn.metrics import mean_squared_error, accuracy_score
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.model_selection import train_test_split, KFold
+from sklearn import tree
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+import seaborn as sns
+
+# Cargar el conjunto de datos Titanic
+carpeta = Path.cwd()
+
+ru = pd.read_csv(carpeta/"datos_roundup.txt")
+
+alturas = pd.read_csv(carpeta/"Resultados - Altura - 2025v - Alturas(1).csv", index_col= 0)
+
+alturas.columns
+
+alturas = alturas[[ 'Altura (cm)', 'Sexo al nacer (M/F)', 'altura madre']]
+
+
+datos_varones = alturas[alturas['Sexo al nacer (M/F)'] == 'M']
+X = datos_varones[['altura madre']]
+datos_altura = alturas[['Altura (cm)']]
+Y = datos_altura[alturas['Sexo al nacer (M/F)']=='M']
+
+neigh = KNeighborsRegressor(n_neighbors=5)
+neigh.fit(X, Y)
+
+dato_nuevo = pd.DataFrame([{'altura madre': 156}])
+Y_pred2 = neigh.predict(dato_nuevo)
+Y_pred = neigh.predict(X)
+print('el error es ', mean_squared_error(Y, Y_pred))
+
+
+
+errores = pd.DataFrame(columns = ['k', 'error']) 
+
+
+for k in range (1,21):
+    neigh = KNeighborsRegressor(n_neighbors=k)
+    neigh.fit(X, Y)
+    Y_pred = neigh.predict(X)
+    error = mean_squared_error(Y, Y_pred)
+    temp_df = pd.DataFrame({'k': [k], 'error': [error]})
+    errores = pd.concat([errores, temp_df], ignore_index=True)
+    
+plt.plot(errores['k'], errores['error'], marker = 'o')
+plt.xticks(range(0, 25,5))
+plt.grid(True)
+plt.xlabel('k values')
+plt.ylabel('Mean Squared Error')
+plt.title('Mean Squared Error vs k for KNN Regressor')
+
+#%%
+carpeta = Path.cwd()
+mpg = pd.read_csv(carpeta/"auto-mpg.xls")
+mpg.columns
+var_explicativa = mpg[['acceleration']]
+X = var_explicativa
+var_a_explicar= mpg[['mpg']]
+Y = var_a_explicar
+
+neigh = KNeighborsRegressor(n_neighbors=5)
+neigh.fit(X, Y)
+Y_pred = neigh.predict(X)
+print('el error es ', mean_squared_error(Y, Y_pred))
+
+errores = pd.DataFrame(columns = ['k', 'error']) 
+for k in range (1,21):
+    neigh = KNeighborsRegressor(n_neighbors=k)
+    neigh.fit(X, Y)
+    Y_pred = neigh.predict(X)
+    error = mean_squared_error(Y, Y_pred)
+    temp_df = pd.DataFrame({'k': [k], 'error': [error]})
+    errores = pd.concat([errores, temp_df], ignore_index=True)
+    
+plt.plot(errores['k'], errores['error'], marker = 'o')
+plt.xticks(range(0, 25,5))
+plt.grid(True)
+plt.xlabel('k values')
+plt.ylabel('Mean Squared Error')
+plt.title('Mean Squared Error vs k for KNN Regressor')
+
+pair = mpg[['mpg', 'cylinders', 'displacement', 'horsepower', 'weight',
+       'acceleration', 'model year']]
+sns.pairplot(pair)
+
+#%%
+
+mpg.columns
+var_explicativa = mpg[['acceleration', 'model year']]
+X = var_explicativa
+var_a_explicar= mpg[['mpg']]
+errores = pd.DataFrame(columns = ['k', 'error']) 
+for k in range (1,21):
+    neigh = KNeighborsRegressor(n_neighbors=k)
+    neigh.fit(X, Y)
+    Y_pred = neigh.predict(X)
+    error = mean_squared_error(Y, Y_pred)
+    temp_df = pd.DataFrame({'k': [k], 'error': [error]})
+    errores = pd.concat([errores, temp_df], ignore_index=True)
+    
+plt.plot(errores['k'], errores['error'], marker = 'o')
+plt.xticks(range(0, 25,5))
+plt.grid(True)
+plt.xlabel('k values')
+plt.ylabel('Mean Squared Error')
+plt.title('Mean Squared Error vs k for KNN Regressor')
+
+
+pair = mpg[['mpg', 'cylinders', 'displacement', 'horsepower', 'weight',
+       'acceleration', 'model year']]
+sns.pairplot(pair)
+
+#%%
+
+min_acc = mpg['acceleration'].min()
+max_acc = mpg['acceleration'].max()
+
+mpg['acc_n'] = mpg['acceleration'] - min_acc / max_acc - min_acc
+
+var_explicativa = mpg[['acc_n', 'model year']]
+X = var_explicativa
+var_a_explicar= mpg[['mpg']]
+Y = var_a_explicar
+
+neigh = KNeighborsRegressor(n_neighbors=5)
+neigh.fit(X, Y)
+Y_pred = neigh.predict(X)
+print('el error es ', mean_squared_error(Y, Y_pred))
+
+errores = pd.DataFrame(columns = ['k', 'error']) 
+for k in range (1,21):
+    neigh = KNeighborsRegressor(n_neighbors=k)
+    neigh.fit(X, Y)
+    Y_pred = neigh.predict(X)
+    error = mean_squared_error(Y, Y_pred)
+    temp_df = pd.DataFrame({'k': [k], 'error': [error]})
+    errores = pd.concat([errores, temp_df], ignore_index=True)
+    
+plt.plot(errores['k'], errores['error'], marker = 'o')
+plt.xticks(range(0, 25,5))
+plt.grid(True)
+plt.xlabel('k values')
+plt.ylabel('Mean Squared Error')
+plt.title('Mean Squared Error vs k for KNN Regressor acc norm')
+
+
+#%%
+
+
+var_explicativa = mpg[['acceleration']]
+X = var_explicativa
+var_a_explicar= mpg[['mpg']]
+Y = var_a_explicar
+neigh = KNeighborsRegressor(n_neighbors=20)
+neigh.fit(var_explicativa, var_a_explicar)
+
+Y_pred = neigh.predict(var_explicativa)
+datos = mpg[['acceleration', 'mpg']]
+datos['predicciones'] = Y_pred
+    
+
+
+
+datos = datos.sort_values(by='acceleration', ascending=True)
+    
+plt.plot(datos['acceleration'], datos['predicciones'], marker = 'o')
+
+plt.scatter(datos['acceleration'], datos['mpg'])
+
+
+#%%
+
+min_acc = mpg['acceleration'].min()
+max_acc = mpg['acceleration'].max()
+
+mpg['acc_n'] = mpg['acceleration'] - min_acc / max_acc - min_acc
+
+min_w = mpg['weight'].min()
+max_w = mpg['weight'].max()
+
+mpg['w_n'] = mpg['weight'] - min_w / max_w - min_w
+
+
+
+X = mpg[['displacement', 'horsepower', 'w_n',
+       'acc_n', 'model year']]
+
+Y = mpg[['acceleration']]
+X = mpg[['mpg']]
+X_train, X_test, Y_train , Y_test = train_test_split(X,Y, test_size=0.2)
+
+train_test = pd.DataFrame(columns = ['k', 'error_train', 'error_test']) 
+for k in range (1,21):
+    modelo = KNeighborsRegressor(n_neighbors=k)
+    modelo.fit(X_train, Y_train)
+    Y_pred_train = modelo.predict(X_train)
+    Y_pred_test = modelo.predict(X_test)
+    error_train = mean_squared_error(Y_train, Y_pred_train)
+    error_test= mean_squared_error(Y_test, Y_pred_test)
+    temp_df = pd.DataFrame({'k': [k], 'error_train': [error_train], 'error_test': [error_test]})
+    train_test = pd.concat([train_test, temp_df], ignore_index=True)
+
+plt.figure(figsize=(10,6))    
+plt.plot(train_test['k'],train_test['error_train'], marker = 'o')
+plt.plot(train_test['k'], train_test['error_test'], marker = 'o')
+plt.xticks(range(0, 25,5))
+plt.grid(True)
+plt.xlabel('k values')
+plt.ylabel('Mean Squared Error')
+plt.title('Mean Squared Error segun cant de vecinos')
+
+
+#%% Ejercicio
+
+df = pd.read_csv('seleccion_modelos.csv')
+X = df.drop('Y', axis = 1)
+Y = df.Y
+X_dev, X_held, Y_dev, Y_held = train_test_split(X,Y,random_state=1, test_size=0.1)
+
+alturas = [1,2,3,5,8,13,21]
+nsplits = 10
+kf = KFold(n_splits=nsplits)
+resultados = np.zeros((nsplits, len(alturas)))
+
+for i, (train_index, test_index) in enumerate(kf.split(X_dev)):
+    kf_X_train, kf_X_test = X_dev.iloc[train_index], X_dev.iloc[test_index]
+    kf_Y_train, kf_Y_test = Y_dev.iloc[train_index], Y_dev.iloc[test_index]
+    for j, hmax in enumerate(alturas):
+        
+        arbol = tree.DecisionTreeClassifier(max_depth=hmax)
+        arbol.fit(kf_X_train, kf_Y_train)
+        pred = arbol.predict(kf_X_test)
+        
+        score = accuracy_score(kf_Y_test, pred)
+        
+        resultados [i,j] = score
+        
+scores_promedio = resultados.mean(axis= 0)
+
+for i, e in enumerate(alturas):
+    print(f'score promedio del modelo con hmax = {e}: {scores_promedio[i]:.4f}')
+    
+arbol_final = tree.DecisionTreeClassifier(max_depth=1)
+arbol_final.fit(X_dev, Y_dev)
+pred_final = arbol_final.predict(X_held)
+
+score_final = accuracy_score(Y_held, pred_final)
+print(score_final)
+
+#%%Ejercicio 2
+
+X = mpg[['displacement', 'horsepower', 'weight',
+       'acceleration', 'model year']]
+Y = mpg[['mpg']]
+X_dev, X_held, Y_dev, Y_held = train_test_split(X,Y,random_state=1, test_size=0.1)
+
+k_n = (list(range(1,51)))
+nsplits = 10
+kf = KFold(n_splits=nsplits)
+resultados = np.zeros((nsplits, len(k_n)))
+
+for i, (train_index, test_index) in enumerate(kf.split(X_dev)):
+    kf_X_train, kf_X_test = X_dev.iloc[train_index], X_dev.iloc[test_index]
+    kf_Y_train, kf_Y_test = Y_dev.iloc[train_index], Y_dev.iloc[test_index]
+ 
+    for j, k in enumerate(k_n):
+        modelo = KNeighborsRegressor(n_neighbors=k)
+        modelo.fit(kf_X_train, kf_Y_train)
+        Y_pred_test = modelo.predict(kf_X_test)
+        error_test= mean_squared_error(kf_Y_test, Y_pred_test)
+        resultados [i,j] = error_test
+
+mcd_promedio = resultados.mean(axis= 0)
+
+for i, e in enumerate(k_n):
+    print(f'score promedio del modelo con hmax = {e}: {mcd_promedio[i]:.4f}')
+    
+        
+mcd_min = mcd_promedio.min()
+#%%
+modelo = KNeighborsRegressor(n_neighbors=10)
+modelo.fit(X_dev, Y_dev)
+Y_pred_test = modelo.predict(X_held)
+error_final= mean_squared_error(kf_Y_test, Y_pred_test)
+print(error_final)
